@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-PROKOPIM - Administrasi Undangan & Agenda Pemerintah Kota Sorong</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar-item-active {
+            background-color: #d97706;
+            color: #ffffff;
+        }
+        /* Utility class for Capitalize Each Word */
+        .capitalize-words {
+            text-transform: capitalize;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-amber-600 text-white rounded-2xl flex items-center justify-center font-bold text-2xl mx-auto mb-4 shadow-lg shadow-amber-600/30">
+                    PO
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">E-PROKOPIM</h2>
+                <p class="text-slate-500 text-sm mt-1">Sistem Administrasi Undangan Pemerintah Kota Sorong</p>
+            </div>
+
+            <div id="login-alert" class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-700 text-sm rounded-lg text-center">
+                Username atau Password salah!
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Username / Akun</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="absolute left-3.5 top-3.5 text-slate-400 w-5 h-5"></i>
+                        <input type="text" id="username" required placeholder="Masukkan akun" class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="absolute left-3.5 top-3.5 text-slate-400 w-5 h-5"></i>
+                        <input type="password" id="password" required placeholder="Masukkan password" class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3.5 rounded-xl font-semibold text-sm transition shadow-lg flex items-center justify-center gap-2">
+                    <span>Masuk ke Sistem</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-slate-100 text-xs text-slate-500 space-y-2">
+                <p class="font-semibold text-slate-700">Petunjuk Login:</p>
+                <div class="flex justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                    <span>Petugas Input: <b>Prokopimsorong</b></span>
+                    <span>Pass: <b>Prokopimsorong</b></span>
+                </div>
+                <div class="flex justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                    <span>Administrator: <b>admin</b></span>
+                    <span>Pass: <b>admin</b></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP LAYOUT -->
+    <div id="main-app" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col justify-between min-h-screen">
+            <div>
+                <!-- BRANDING HEADER -->
+                <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-amber-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-md">
+                        PO
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-base leading-tight tracking-wide">PROTOKOL OFFICE</h1>
+                        <p class="text-[10px] text-amber-500 uppercase tracking-widest font-semibold">Administrasi Protokol</p>
+                    </div>
+                </div>
+
+                <!-- NAVIGATION MENU -->
+                <div class="px-4 py-6">
+                    <p class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Menu Utama</p>
+                    <nav class="space-y-1">
+                        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                            Dashboard
+                        </button>
+                        <button onclick="switchTab('input-surat')" id="nav-input-surat" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                            Input Surat
+                        </button>
+                        <button onclick="switchTab('data-kegiatan')" id="nav-data-kegiatan" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+                            <i data-lucide="list-todo" class="w-5 h-5"></i>
+                            Data Kegiatan
+                        </button>
+                        <button onclick="switchTab('agenda-harian')" id="nav-agenda-harian" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+                            <i data-lucide="calendar" class="w-5 h-5"></i>
+                            Agenda Harian
+                        </button>
+                        <button onclick="switchTab('broadcast-whatsapp')" id="nav-broadcast-whatsapp" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+                            <i data-lucide="megaphone" class="w-5 h-5"></i>
+                            Broadcast WhatsApp
+                        </button>
+                        <button onclick="switchTab('daftar-pejabat')" id="nav-daftar-pejabat" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition hover:bg-slate-800 hover:text-white">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                            Daftar Pejabat
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- USER INFO & LOGOUT -->
+            <div class="p-4 border-t border-slate-800">
+                <div class="flex items-center justify-between bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xs" id="user-avatar">
+                            P
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-semibold text-white truncate" id="current-user-name">Prokopimsorong</p>
+                            <p class="text-[10px] text-slate-400 truncate" id="current-user-role">Petugas Input</p>
+                        </div>
+                    </div>
+                    <button onclick="handleLogout()" class="text-slate-400 hover:text-red-400 transition" title="Keluar">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+            <!-- TOP BAR HEADER -->
+            <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Bagian Protokol</span>
+                    <span>/</span>
+                    <span id="breadcrumb-current" class="font-medium text-slate-800">Dashboard</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Sistem aktif
+                    </span>
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-semibold text-xs text-slate-700" id="header-user-avatar">
+                        A
+                    </div>
+                </div>
+            </header>
+
+            <!-- NOTIFICATION BANNER -->
+            <div id="toast-banner" class="hidden mx-8 mt-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i>
+                    <span id="toast-message">Data kegiatan berhasil disimpan.</span>
+                </div>
+                <button onclick="hideToast()" class="text-emerald-600 hover:text-emerald-800">&times;</button>
+            </div>
+
+            <!-- DYNAMIC TAB CONTENT CONTAINER -->
+            <div class="p-8 flex-1">
+
+                <!-- 1. DASHBOARD TAB -->
+                <div id="tab-dashboard" class="tab-content space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Dashboard Utama</h2>
+                        <p class="text-slate-500 text-sm mt-1">Ringkasan statistik agenda kegiatan Protokol Wali Kota Sorong.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Agenda</p>
+                                <h3 id="stat-total" class="text-3xl font-bold text-slate-900 mt-2">0</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="calendar" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Agenda Hari Ini</p>
+                                <h3 id="stat-today" class="text-3xl font-bold text-amber-600 mt-2">0</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="clock" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pejabat Terdaftar</p>
+                                <h3 id="stat-pejabat" class="text-3xl font-bold text-slate-900 mt-2">0</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="users" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. INPUT SURAT UNDANGAN TAB -->
+                <div id="tab-input-surat" class="tab-content hidden space-y-6">
+                    <div>
+                        <h2 id="form-title" class="text-2xl font-bold text-slate-900">Input surat undangan</h2>
+                        <p class="text-slate-500 text-sm mt-1">Masukkan informasi sesuai surat undangan yang diterima.</p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-5xl">
+                        <div class="flex items-center justify-between pb-6 border-b border-slate-100 mb-6">
+                            <h3 class="text-base font-semibold text-slate-800">Formulir undangan baru</h3>
+                            <span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium rounded-full">Draft input</span>
+                        </div>
+
+                        <form id="agenda-form" onsubmit="saveAgenda(event)" class="space-y-6">
+                            <input type="hidden" id="agenda-id">
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Nama kegiatan *</label>
+                                <input type="text" id="nama_kegiatan" required placeholder="Contoh: KEGIATAN SERBUAN TERITORIAL DI WILAYAH KOREM 181/PRAJA VIRA TAMA TAHUN 2026" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Nomor surat</label>
+                                    <input type="text" id="nomor_surat" placeholder="Masukkan nomor surat resmi" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Instansi pengundang</label>
+                                    <input type="text" id="instansi_pengundang" placeholder="Contoh: Korem 181/Praja Vira Tama" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Tanggal kegiatan *</label>
+                                    <input type="date" id="tanggal_kegiatan" required class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Waktu mulai *</label>
+                                    <input type="time" id="waktu_mulai" required class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Waktu selesai</label>
+                                    <input type="time" id="waktu_selesai" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Pejabat (dapat memilih lebih dari satu)</label>
+                                <div id="pejabat-checkbox-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                    <!-- Checkboxes generated dynamically -->
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Pejabat lain di luar daftar (pisahkan dengan koma)</label>
+                                    <input type="text" id="pejabat_lain" placeholder="Contoh: Kepala Dinas Kominfo" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Tempat kegiatan *</label>
+                                    <input type="text" id="tempat_kegiatan" required placeholder="Contoh: Lapangan Kampung Klamnik, Kelurahan Malasilen, Distrik Sorong Utara" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Petugas protokol (ketik manual)</label>
+                                    <input type="text" id="petugas_protokol" placeholder="Nama Petugas Protokol Lapangan" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Upload Berkas Surat (PDF, JPG, JPEG, PNG)</label>
+                                    <input type="file" id="berkas_surat" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileUpload(event)" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800">
+                                    <div id="file-preview" class="mt-2 text-xs text-slate-500 hidden"></div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                                <button type="button" onclick="resetForm()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-sm font-semibold transition">Batal / Reset</button>
+                                <button type="submit" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition shadow-md flex items-center gap-2">
+                                    <i data-lucide="save" class="w-4 h-4"></i>
+                                    <span>Simpan Data Kegiatan</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 3. DATA KEGIATAN TAB -->
+                <div id="tab-data-kegiatan" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-900">Data Kegiatan Undangan</h2>
+                            <p class="text-slate-500 text-sm mt-1">Daftar seluruh kegiatan yang telah diinput ke dalam sistem.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="date" id="filter-tanggal-kegiatan" onchange="renderDataKegiatan()" class="p-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <button onclick="clearFilterKegiatan()" class="px-3 py-2.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-xl text-xs font-semibold transition">Semua Tanggal</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                        <th class="p-4">Tanggal & Waktu</th>
+                                        <th class="p-4">Nama Kegiatan</th>
+                                        <th class="p-4">Tempat</th>
+                                        <th class="p-4">Pejabat Hadir</th>
+                                        <th class="p-4">Berkas</th>
+                                        <th class="p-4 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-kegiatan-body" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Table Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. AGENDA HARIAN TAB -->
+                <div id="tab-agenda-harian" class="tab-content hidden space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Agenda Harian</h2>
+                        <p class="text-slate-500 text-sm mt-1">Tampilan urutan agenda berdasarkan hari dan waktu pelaksanaan.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 max-w-md">
+                        <label class="text-xs font-semibold uppercase text-slate-500 flex-shrink-0">Pilih Tanggal:</label>
+                        <input type="date" id="agenda-harian-date" onchange="renderAgendaHarian()" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm bg-slate-50">
+                    </div>
+
+                    <div id="agenda-harian-list" class="space-y-4">
+                        <!-- Agenda items timeline -->
+                    </div>
+                </div>
+
+                <!-- 5. BROADCAST WHATSAPP TAB -->
+                <div id="tab-broadcast-whatsapp" class="tab-content hidden space-y-6">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-amber-600">PUBLIKASI AGENDA</p>
+                        <h2 class="text-2xl font-bold text-slate-900 mt-1">Broadcast WhatsApp</h2>
+                        <p class="text-slate-500 text-sm mt-1">Buat satu pesan agenda untuk grup WhatsApp pejabat.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <!-- LEFT FORM & PREVIEW -->
+                        <div class="lg:col-span-7 space-y-6">
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700">Tanggal agenda</label>
+                                <input type="date" id="broadcast-date" onchange="renderBroadcastWA()" class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 text-sm bg-slate-50">
+                                <p id="broadcast-count" class="text-xs font-semibold text-slate-600">0 kegiatan</p>
+                            </div>
+
+                            <div class="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-200/80 shadow-sm relative">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-2">
+                                        <i data-lucide="message-square" class="w-4 h-4 text-emerald-600"></i>
+                                        Pratinjau Pesan WhatsApp
+                                    </span>
+                                    <button onclick="copyToClipboard()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow flex items-center gap-1.5">
+                                        <i data-lucide="copy" class="w-4 h-4"></i>
+                                        <span>Salin Pesan WhatsApp</span>
+                                    </button>
+                                </div>
+                                <textarea id="whatsapp-preview-text" readonly class="w-full h-96 p-4 rounded-xl border border-emerald-200 bg-white font-mono text-xs text-slate-800 focus:outline-none leading-relaxed shadow-inner"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT INSTRUCTIONS -->
+                        <div class="lg:col-span-5">
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                                <div class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold">
+                                    <i data-lucide="send" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900">Alur pengiriman</h3>
+                                    <ol class="mt-4 space-y-3 text-sm text-slate-600 list-decimal list-inside">
+                                        <li>Pilih tanggal agenda.</li>
+                                        <li>Periksa seluruh kegiatan dan urutannya.</li>
+                                        <li>Tekan tombol salin.</li>
+                                        <li>Buka grup WhatsApp pejabat.</li>
+                                        <li>Tempel dan kirim pesan.</li>
+                                    </ol>
+                                </div>
+                                <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800">
+                                    Pastikan agenda sudah diverifikasi sebelum dibagikan.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. DAFTAR PEJABAT TAB -->
+                <div id="tab-daftar-pejabat" class="tab-content hidden space-y-6">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-amber-600">PENGATURAN MASTER DATA</p>
+                        <h2 class="text-2xl font-bold text-slate-900 mt-1">Daftar pejabat</h2>
+                        <p class="text-slate-500 text-sm mt-1">Kelola daftar jabatan pejabat yang dapat dipilih saat input kegiatan.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                        <!-- FORM TAMBAH / EDIT PEJABAT -->
+                        <form id="pejabat-form" onsubmit="handleSavePejabat(event)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                            <input type="hidden" id="edit-pejabat-id">
+                            <h3 id="pejabat-form-title" class="text-sm font-bold text-slate-800">Tambah Jabatan Baru</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                <div class="md:col-span-10">
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">Nama Jabatan</label>
+                                    <input type="text" id="pejabat_nama" required placeholder="Contoh: Kepala Dinas Kesehatan" class="w-full p-3 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-amber-500 capitalize-words">
+                                    <input type="hidden" id="pejabat_keterangan" value="Pemerintah Kota Sorong">
+                                </div>
+                                <div class="md:col-span-2 flex gap-2">
+                                    <button type="submit" id="btn-save-pejabat" class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-1.5 shadow">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                        <span>Simpan</span>
+                                    </button>
+                                    <button type="button" id="btn-cancel-pejabat" onclick="resetPejabatForm()" class="hidden py-3 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-sm font-semibold transition" title="Batal Edit">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- LIST PEJABAT -->
+                        <div id="pejabat-list" class="divide-y divide-slate-100 pt-2">
+                            <!-- Dynamic Pejabat Rows -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- FOOTER -->
+            <footer class="p-6 text-center text-xs text-slate-400 border-t border-slate-200">
+                PROTOKOL OFFICE &bull; Sistem Administrasi Bagian Protokol Kota Sorong &copy; 2026
+            </footer>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT APP CODE -->
+    <script>
+        // INITIAL DATA & STATE MANAGEMENT
+        let currentUser = null;
+        let attachedFileData = null;
+
+        // DEFAULT PEJABAT MASTER (DENGAN FORMAT CAPITALIZE EACH WORD)
+        const defaultPejabat = [
+            { id: 1, nama: 'Walikota', keterangan: 'Kepala Daerah', aktif: true },
+            { id: 2, nama: 'Wakil Walikota', keterangan: 'Wakil Kepala Daerah', aktif: true },
+            { id: 3, nama: 'Plt Sekretaris Daerah', keterangan: 'Sekretaris Daerah', aktif: true },
+            { id: 4, nama: 'Staf Ahli Bidang Pemerintahan, Hukum Dan Politik', keterangan: 'Staf Ahli', aktif: true },
+            { id: 5, nama: 'Staf Ahli Bidang Ekonomi, Keuangan Dan Pembangunan', keterangan: 'Staf Ahli', aktif: true },
+            { id: 6, nama: 'Staf Ahli Bidang Kemasyarakatan Dan SDM', keterangan: 'Staf Ahli', aktif: true },
+            { id: 7, nama: 'Staf Ahli Bidang Pengembangan Otsus', keterangan: 'Staf Ahli', aktif: true },
+            { id: 8, nama: 'Staf Ahli Bidang Pengembangan Masyarakat Adat Dan Budaya', keterangan: 'Staf Ahli', aktif: true },
+            { id: 9, nama: 'Asisten Bidang Pemerintahan Dan Kesra', keterangan: 'Asisten', aktif: true },
+            { id: 10, nama: 'Asisten Bidang Perekonomian Dan Pembangunan', keterangan: 'Asisten', aktif: true },
+            { id: 11, nama: 'Asisten Bidang Administrasi Umum', keterangan: 'Asisten', aktif: true },
+            { id: 12, nama: 'Plt. Kepala Bappeda', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 13, nama: 'Kepala Bpkad', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 14, nama: 'Kepala Bp2rd', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 15, nama: 'Kepala Kesbangpol', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 16, nama: 'Kepala Bkpsdm', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 17, nama: 'Kepala Bpbd', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 18, nama: 'Plt. Sekretaris Dewan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 19, nama: 'Kepala Dinas Kesehatan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 20, nama: 'Plt. Kepala Dinas Pendidikan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 21, nama: 'Kepala Dinas P2kb', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 22, nama: 'Kepala Dinas P3a', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 23, nama: 'Kepala Dinas Dpmstp', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 24, nama: 'Kepala Dinas Perumahan Dan Permukiman', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 25, nama: 'Kepala Dinas Lingkungan Hidup', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 26, nama: 'Kepala Dinas Pertanian', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 27, nama: 'Kepala Dinas Kelautan Dan Perikanan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 28, nama: 'Kepala Dinas Ketenagakerjaan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 29, nama: 'Plt Kepala Dinas Pariwisata', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 30, nama: 'Kepala Dinas Dukcapil', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 31, nama: 'Kepala Dinas Perdagangan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 32, nama: 'Kepala Dinas Perindustrian', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 33, nama: 'Kepala Dinas Perhubungan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 34, nama: 'Kepala Dinas Sosial', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 35, nama: 'Kepala Dinas Pemberdayaan Masyarakat', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 36, nama: 'Kepala Dinas Koperasi Dan Umkm', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 37, nama: 'Kepala Dinas Ketahanan Pangan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 38, nama: 'Kepala Dinas Kearsipan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 39, nama: 'Kepala Dinas Bina Marga', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 40, nama: 'Kepala Dinas Cipta Karya', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 41, nama: 'Plt. Kepala Satpol Pp', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 42, nama: 'Kepala Dinas Damkar', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 43, nama: 'Kepala Dinas Pertanahan', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 44, nama: 'Plt. Kepala Dinas Pemuda & Olahraga', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 45, nama: 'Kepala Dinas Kominfo', keterangan: 'Pimpinan OPD', aktif: true },
+            { id: 46, nama: 'Kepala Bagian Umum', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 47, nama: 'Plt Kepala Bagian Prokopim', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 48, nama: 'Kepala Bagian Pemerintahan', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 49, nama: 'Kepala Bagian Hukum', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 50, nama: 'Kepala Bagian Organisasi Dan Tata Laksana', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 51, nama: 'Kepala Bagian Perekonomian Dan Sda', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 52, nama: 'Kepala Bagian Kesejahteraan Sosial', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 53, nama: 'Kepala Bagian Ulp', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 54, nama: 'Plt Kepala Bagian Administrasi Pembangunan', keterangan: 'Kepala Bagian', aktif: true },
+            { id: 55, nama: 'Plt. Sekretaris Korpri', keterangan: 'Sekretariat Korpri', aktif: true }
+        ];
+
+        // LOAD DATA FROM LOCALSTORAGE
+        function getAgendas() {
+            return JSON.parse(localStorage.getItem('prokopim_agendas') || '[]');
+        }
+
+        function saveAgendas(agendas) {
+            localStorage.setItem('prokopim_agendas', JSON.stringify(agendas));
+        }
+
+        function getPejabatList() {
+            const data = localStorage.getItem('prokopim_pejabat');
+            if (!data) {
+                localStorage.setItem('prokopim_pejabat', JSON.stringify(defaultPejabat));
+                return defaultPejabat;
+            }
+            return JSON.parse(data);
+        }
+
+        function savePejabatList(list) {
+            localStorage.setItem('prokopim_pejabat', JSON.stringify(list));
+        }
+
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            
+            // Set default date picker to today (YYYY-MM-DD)
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggal_kegiatan').value = todayStr;
+            document.getElementById('broadcast-date').value = todayStr;
+            document.getElementById('agenda-harian-date').value = todayStr;
+
+            // Render components
+            renderPejabatCheckboxes();
+            renderPejabatMasterList();
+        });
+
+        // LOGIN SYSTEM
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+
+            if (u === 'Prokopimsorong' && p === 'Prokopimsorong') {
+                currentUser = { name: 'Prokopimsorong', role: 'Petugas Input / Pengetikan' };
+            } else if (u === 'admin' && p === 'admin') {
+                currentUser = { name: 'Administrator', role: 'Admin Protokol' };
+            } else {
+                document.getElementById('login-alert').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('login-alert').classList.add('hidden');
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+
+            document.getElementById('current-user-name').innerText = currentUser.name;
+            document.getElementById('current-user-role').innerText = currentUser.role;
+            document.getElementById('user-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('header-user-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+
+            switchTab('dashboard');
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // TAB NAVIGATION
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('sidebar-item-active');
+            });
+
+            const activeTab = document.getElementById(`tab-${tabName}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            if (activeNav) activeNav.classList.add('sidebar-item-active');
+
+            document.getElementById('breadcrumb-current').innerText = tabName.replace('-', ' ').toUpperCase();
+
+            // Refresh tab views
+            if (tabName === 'dashboard') updateDashboardStats();
+            if (tabName === 'data-kegiatan') renderDataKegiatan();
+            if (tabName === 'agenda-harian') renderAgendaHarian();
+            if (tabName === 'broadcast-whatsapp') renderBroadcastWA();
+            if (tabName === 'daftar-pejabat') renderPejabatMasterList();
+            if (tabName === 'input-surat') renderPejabatCheckboxes();
+
+            lucide.createIcons();
+        }
+
+        // PEJABAT MANAGEMENT (DAFTAR PEJABAT)
+        function renderPejabatMasterList() {
+            const list = getPejabatList();
+            const container = document.getElementById('pejabat-list');
+            
+            if (list.length === 0) {
+                container.innerHTML = `<div class="py-8 text-center text-slate-400 text-sm">Belum ada data jabatan. Tambahkan melalui form di atas.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(item => `
+                <div class="py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-sm border border-slate-200">
+                            ${item.nama.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-800 capitalize-words">${item.nama}</h4>
+                            <p class="text-xs text-slate-500">${item.keterangan || 'Pemerintah Kota Sorong'}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">Aktif</span>
+                        <button onclick="editPejabat(${item.id})" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Edit Jabatan">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deletePejabat(${item.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition" title="Hapus Jabatan">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function handleSavePejabat(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-pejabat-id').value;
+            let nama = document.getElementById('pejabat_nama').value.trim();
+            const keterangan = document.getElementById('pejabat_keterangan').value.trim();
+
+            if (!nama) return;
+
+            // Helper to capitalize each word
+            nama = nama.toLowerCase().replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+
+            let list = getPejabatList();
+
+            if (id) {
+                // Update Existing
+                const index = list.findIndex(item => item.id == id);
+                if (index !== -1) {
+                    list[index].nama = nama;
+                    list[index].keterangan = keterangan || 'Pemerintah Kota Sorong';
+                }
+                showToast('Jabatan berhasil diperbarui!');
+            } else {
+                // Add New
+                const newPejabat = {
+                    id: Date.now(),
+                    nama: nama,
+                    keterangan: keterangan || 'Pemerintah Kota Sorong',
+                    aktif: true
+                };
+                list.push(newPejabat);
+                showToast('Jabatan baru berhasil ditambahkan!');
+            }
+
+            savePejabatList(list);
+            resetPejabatForm();
+            renderPejabatMasterList();
+            renderPejabatCheckboxes();
+        }
+
+        function editPejabat(id) {
+            const list = getPejabatList();
+            const item = list.find(p => p.id === id);
+            if (!item) return;
+
+            document.getElementById('edit-pejabat-id').value = item.id;
+            document.getElementById('pejabat_nama').value = item.nama;
+            document.getElementById('pejabat-form-title').innerText = 'Edit Nama Jabatan';
+            document.getElementById('btn-save-pejabat').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i><span>Update</span>';
+            document.getElementById('btn-cancel-pejabat').classList.remove('hidden');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            lucide.createIcons();
+        }
+
+        function resetPejabatForm() {
+            document.getElementById('pejabat-form').reset();
+            document.getElementById('edit-pejabat-id').value = '';
+            document.getElementById('pejabat-form-title').innerText = 'Tambah Jabatan Baru';
+            document.getElementById('btn-save-pejabat').innerHTML = '<i data-lucide="plus" class="w-4 h-4"></i><span>Simpan</span>';
+            document.getElementById('btn-cancel-pejabat').classList.add('hidden');
+            lucide.createIcons();
+        }
+
+        function deletePejabat(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus jabatan ini dari daftar?')) return;
+            let list = getPejabatList();
+            list = list.filter(item => item.id !== id);
+            savePejabatList(list);
+            renderPejabatMasterList();
+            renderPejabatCheckboxes();
+            showToast('Jabatan dihapus dari daftar.');
+        }
+
+        function renderPejabatCheckboxes() {
+            const list = getPejabatList();
+            const container = document.getElementById('pejabat-checkbox-container');
+            
+            if (list.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-400 col-span-full">Belum ada daftar jabatan. Silakan tambah di menu Daftar Pejabat.</span>`;
+                return;
+            }
+
+            container.innerHTML = list.map(p => `
+                <label class="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-slate-200 text-xs font-medium cursor-pointer hover:border-amber-400 transition">
+                    <input type="checkbox" value="${p.nama}" class="pejabat-checkbox rounded text-amber-600 focus:ring-amber-500">
+                    <span class="capitalize-words">${p.nama}</span>
+                </label>
+            `).join('');
+        }
+
+        // FILE HANDLING
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('file-preview');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    attachedFileData = {
+                        name: file.name,
+                        data: evt.target.result
+                    };
+                    preview.classList.remove('hidden');
+                    preview.innerText = `Berkas terlampir: ${file.name}`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // SAVE / EDIT AGENDA
+        function saveAgenda(e) {
+            e.preventDefault();
+
+            const agendaId = document.getElementById('agenda-id').value;
+            const namaKegiatan = document.getElementById('nama_kegiatan').value.trim();
+            const nomorSurat = document.getElementById('nomor_surat').value.trim();
+            const instansi = document.getElementById('instansi_pengundang').value.trim();
+            const tanggal = document.getElementById('tanggal_kegiatan').value;
+            const waktuMulai = document.getElementById('waktu_mulai').value;
+            const waktuSelesai = document.getElementById('waktu_selesai').value;
+            const tempat = document.getElementById('tempat_kegiatan').value.trim();
+            const petugas = document.getElementById('petugas_protokol').value.trim();
+            const pejabatLain = document.getElementById('pejabat_lain').value.trim();
+
+            // Selected Checkboxes
+            const selectedPejabat = [];
+            document.querySelectorAll('.pejabat-checkbox:checked').forEach(cb => {
+                selectedPejabat.push(cb.value);
+            });
+
+            if (pejabatLain) {
+                pejabatLain.split(',').forEach(p => {
+                    if (p.trim()) {
+                        let formattedP = p.trim().toLowerCase().replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+                        selectedPejabat.push(formattedP);
+                    }
+                });
+            }
+
+            const agendas = getAgendas();
+
+            if (agendaId) {
+                // Update
+                const index = agendas.findIndex(a => a.id == agendaId);
+                if (index !== -1) {
+                    agendas[index] = {
+                        ...agendas[index],
+                        namaKegiatan,
+                        nomorSurat,
+                        instansi,
+                        tanggal,
+                        waktuMulai,
+                        waktuSelesai,
+                        tempat,
+                        petugas,
+                        pejabat: selectedPejabat,
+                        berkas: attachedFileData || agendas[index].berkas
+                    };
+                }
+            } else {
+                // Create New
+                const newAgenda = {
+                    id: Date.now(),
+                    namaKegiatan,
+                    nomorSurat,
+                    instansi,
+                    tanggal,
+                    waktuMulai,
+                    waktuSelesai,
+                    tempat,
+                    petugas,
+                    pejabat: selectedPejabat,
+                    berkas: attachedFileData
+                };
+                agendas.push(newAgenda);
+            }
+
+            saveAgendas(agendas);
+            resetForm();
+            showToast('Data kegiatan berhasil disimpan!');
+            switchTab('data-kegiatan');
+        }
+
+        function resetForm() {
+            document.getElementById('agenda-form').reset();
+            document.getElementById('agenda-id').value = '';
+            document.getElementById('form-title').innerText = 'Input surat undangan';
+            document.getElementById('file-preview').classList.add('hidden');
+            attachedFileData = null;
+        }
+
+        // RENDER DATA KEGIATAN TABLE
+        function renderDataKegiatan() {
+            const agendas = getAgendas();
+            const filterDate = document.getElementById('filter-tanggal-kegiatan').value;
+            const tbody = document.getElementById('table-kegiatan-body');
+
+            let filtered = agendas;
+            if (filterDate) {
+                filtered = agendas.filter(a => a.tanggal === filterDate);
+            }
+
+            // Sort by Waktu Mulai
+            filtered.sort((a, b) => a.waktuMulai.localeCompare(b.waktuMulai));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">Tidak ada data kegiatan pada tanggal ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-800">${formatDateIndo(item.tanggal)}</div>
+                        <div class="text-xs text-amber-600 font-semibold">${item.waktuMulai} WIT ${item.waktuSelesai ? '- ' + item.waktuSelesai + ' WIT' : ''}</div>
+                    </td>
+                    <td class="p-4 max-w-xs">
+                        <div class="font-semibold text-slate-900 leading-tight">${item.namaKegiatan}</div>
+                        <div class="text-xs text-slate-400 mt-1">No: ${item.nomorSurat || '-'} | Pengundang: ${item.instansi || '-'}</div>
+                    </td>
+                    <td class="p-4 text-xs text-slate-600 max-w-xs">${item.tempat}</td>
+                    <td class="p-4">
+                        <div class="flex flex-wrap gap-1">
+                            ${item.pejabat && item.pejabat.length > 0 ? item.pejabat.map(p => `<span class="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded text-[11px] capitalize-words">${p}</span>`).join('') : '-'}
+                        </div>
+                    </td>
+                    <td class="p-4 text-xs">
+                        ${item.berkas ? `<a href="${item.berkas.data}" download="${item.berkas.name}" class="text-blue-600 hover:underline font-medium flex items-center gap-1"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Berkas</a>` : '<span class="text-slate-400">-</span>'}
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="editAgenda(${item.id})" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Edit Agenda">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteAgenda(${item.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition" title="Hapus Agenda">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function clearFilterKegiatan() {
+            document.getElementById('filter-tanggal-kegiatan').value = '';
+            renderDataKegiatan();
+        }
+
+        function editAgenda(id) {
+            const agendas = getAgendas();
+            const agenda = agendas.find(a => a.id === id);
+            if (!agenda) return;
+
+            switchTab('input-surat');
+
+            document.getElementById('agenda-id').value = agenda.id;
+            document.getElementById('nama_kegiatan').value = agenda.namaKegiatan;
+            document.getElementById('nomor_surat').value = agenda.nomorSurat || '';
+            document.getElementById('instansi_pengundang').value = agenda.instansi || '';
+            document.getElementById('tanggal_kegiatan').value = agenda.tanggal;
+            document.getElementById('waktu_mulai').value = agenda.waktuMulai;
+            document.getElementById('waktu_selesai').value = agenda.waktuSelesai || '';
+            document.getElementById('tempat_kegiatan').value = agenda.tempat;
+            document.getElementById('petugas_protokol').value = agenda.petugas || '';
+
+            // Check Checkboxes
+            renderPejabatCheckboxes();
+            if (agenda.pejabat) {
+                document.querySelectorAll('.pejabat-checkbox').forEach(cb => {
+                    if (agenda.pejabat.includes(cb.value)) {
+                        cb.checked = true;
+                    }
+                });
+            }
+
+            document.getElementById('form-title').innerText = 'Edit Surat Undangan Agenda';
+        }
+
+        function deleteAgenda(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus agenda kegiatan ini?')) return;
+            let agendas = getAgendas();
+            agendas = agendas.filter(a => a.id !== id);
+            saveAgendas(agendas);
+            renderDataKegiatan();
+            showToast('Agenda berhasil dihapus!');
+        }
+
+        // RENDER AGENDA HARIAN
+        function renderAgendaHarian() {
+            const dateVal = document.getElementById('agenda-harian-date').value;
+            const agendas = getAgendas().filter(a => a.tanggal === dateVal);
+            agendas.sort((a, b) => a.waktuMulai.localeCompare(b.waktuMulai));
+
+            const container = document.getElementById('agenda-harian-list');
+
+            if (agendas.length === 0) {
+                container.innerHTML = `<div class="p-8 bg-white rounded-2xl border border-slate-200 text-center text-slate-400">Tidak ada agenda pada tanggal ${formatDateIndo(dateVal)}.</div>`;
+                return;
+            }
+
+            container.innerHTML = agendas.map((item, index) => `
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-6 items-start">
+                    <div class="px-4 py-2 bg-amber-50 rounded-xl border border-amber-200 text-amber-700 font-bold text-base flex-shrink-0">
+                        ${item.waktuMulai} WIT
+                    </div>
+                    <div class="space-y-2 flex-1">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Kegiatan #${index + 1}</span>
+                        <h3 class="text-base font-bold text-slate-900">${item.namaKegiatan}</h3>
+                        <p class="text-sm text-slate-600"><span class="font-semibold text-slate-700">Tempat:</span> ${item.tempat}</p>
+                        <div class="flex flex-wrap gap-2 pt-2">
+                            ${item.pejabat ? item.pejabat.map(p => `<span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium border border-slate-200 capitalize-words">${p}</span>`).join('') : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // BROADCAST WHATSAPP GENERATOR
+        function renderBroadcastWA() {
+            const dateVal = document.getElementById('broadcast-date').value;
+            const agendas = getAgendas().filter(a => a.tanggal === dateVal);
+            
+            // Sort by time (Waktu paling awal diatas)
+            agendas.sort((a, b) => a.waktuMulai.localeCompare(b.waktuMulai));
+
+            document.getElementById('broadcast-count').innerText = `${agendas.length} kegiatan`;
+
+            const dateFormattedIndo = formatDateFullIndo(dateVal);
+
+            let text = `Kepada Yth :\n`;
+            text += `*Walikota Sorong\n`;
+            text += `*Wakil Walikota Sorong\n`;
+            text += `*Sekretaris Daerah\n`;
+            text += `*Staf Ahli / Asisten\n`;
+            text += `*Pimpinan Tinggi Pratama\n`;
+            text += `*Pejabat Pengawas/ Administrator. ASN di Lingkungan Pemerintah Daerah Kota Sorong\n\n`;
+            text += `Berikut Agenda Kegiatan Pemerintah Kota Sorong *${dateFormattedIndo}*.\n\n`;
+
+            if (agendas.length === 0) {
+                text += `( Belum ada agenda kegiatan yang terdaftar untuk tanggal ini )`;
+            } else {
+                agendas.forEach((item, index) => {
+                    const numberBox = `( 1 )`.replace('1', index + 1);
+                    text += `${numberBox} *${item.namaKegiatan}*\n\n`;
+                    text += `Waktu : ${item.waktuMulai} WIT\n`;
+                    text += `Tempat : ${item.tempat}\n\n`;
+                    text += `Pejabat:\n`;
+                    
+                    if (item.pejabat && item.pejabat.length > 0) {
+                        item.pejabat.forEach(p => {
+                            // Capitalize each word for broadcast text
+                            let capitalizedP = p.toLowerCase().replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+                            text += `*${capitalizedP}\n`;
+                        });
+                    } else {
+                        text += `*(Disesuaikan)\n`;
+                    }
+                    text += `\n\n`;
+                });
+            }
+
+            text += `Ttd\nPlt. Sekretaris Daerah Kota Sorong`;
+
+            document.getElementById('whatsapp-preview-text').value = text;
+        }
+
+        function copyToClipboard() {
+            const copyText = document.getElementById('whatsapp-preview-text');
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            showToast('Teks Broadcast WhatsApp berhasil disalin ke clipboard!');
+        }
+
+        // DASHBOARD STATS
+        function updateDashboardStats() {
+            const agendas = getAgendas();
+            const todayStr = new Date().toISOString().split('T')[0];
+            
+            document.getElementById('stat-total').innerText = agendas.length;
+            document.getElementById('stat-today').innerText = agendas.filter(a => a.tanggal === todayStr).length;
+            document.getElementById('stat-pejabat').innerText = getPejabatList().length;
+        }
+
+        // UTILITIES
+        function formatDateIndo(dateString) {
+            if (!dateString) return '-';
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        function formatDateFullIndo(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+            const dayName = days[date.getDay()];
+            const dayNum = String(date.getDate()).padStart(2, '0');
+            const monthName = months[date.getMonth()];
+            const yearNum = date.getFullYear();
+
+            return `${dayName}, ${dayNum} ${monthName} ${yearNum}`;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-banner');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast-banner').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
